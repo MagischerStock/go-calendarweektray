@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*' # Trigger auf Versionstags wie v1.0.0
+        workflow_dispatch: # Ermöglicht das manuelle Auslösen des Workflows über die GitHub-Weboberfläche
 
 jobs:
   build:

@@ -3,7 +3,7 @@ name: Go
 on:
   push:
     tags:
-      - 'v*.*.*' # Workflow wird bei Versionstags wie v1.0.0 ausgelöst
+      - 'v*.*.*' # Dies sorgt dafür, dass der Workflow bei Versionstags wie v1.0.0 ausgelöst wird
   workflow_dispatch: # Ermöglicht manuelles Auslösen
 
 jobs:
@@ -21,11 +21,19 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
+    - name: Get the current commit SHA
+      id: vars
+      run: echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+
+    - name: Get the current time
+      id: time
+      run: echo "::set-output name=time::$(date -u +'%Y-%m-%d %H:%M:%S')"
+
     - name: Get dependencies
       run: ./getdeps.cmd
 
     - name: Build
-      run: go build -ldflags "-X main.semVer=${{ github.ref_name }} -X main.sha1ver=$(git rev-parse --short HEAD) -X main.buildTime=$(date -u +'%Y-%m-%d %H:%M:%S')" -o Kalenderwoche.exe
+      run: go build -ldflags "-X main.semVer=${{ github.ref }} -X main.sha1ver=${{ steps.vars.outputs.sha }} -X main.buildTime='${{ steps.time.outputs.time }}'" -o Kalenderwoche.exe
 
     - name: Run tests
       run: ./test.cmd

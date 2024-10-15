@@ -10,8 +10,15 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
-    steps:
 
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      deployments: write
+      actions: write
+      
+    steps:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:

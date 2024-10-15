@@ -59,10 +59,13 @@ jobs:
     - name: Delete pre-release and tag if build fails
       if: failure()
       run: |
-        RELEASE_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .id)
-        curl -X DELETE \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
-
+        $releaseId = (Invoke-RestMethod -Headers @{Authorization = "token $env:GITHUB_TOKEN"} `
+                     -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}").id
+                     
+        Invoke-RestMethod -Method Delete -Headers @{Authorization = "token $env:GITHUB_TOKEN"} `
+            -Uri "https://api.github.com/repos/${{ github.repository }}/releases/$releaseId"
+        
         git tag -d ${{ github.ref_name }}
         git push --delete origin ${{ github.ref_name }}
+      shell: pwsh
+

@@ -52,7 +52,7 @@ jobs:
         files: ./Kalenderwoche.exe
         prerelease: true
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MY_CUSTOM_TOKEN: ${{ secrets.MY_CUSTOM_TOKEN }}
 
     - name: Change pre-release to production ready if build succeeds
       if: success()

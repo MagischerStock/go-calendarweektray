@@ -3,7 +3,7 @@ name: Go
 on:
   push:
     tags:
-      - 'v*.*.*' # Dies sorgt dafür, dass der Workflow bei Versionstags wie v1.0.0 ausgelöst wird
+      - 'v*.*.*' # Workflow wird bei Versionstags wie v1.0.0 ausgelöst
   workflow_dispatch: # Ermöglicht manuelles Auslösen
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
       run: ./getdeps.cmd
 
     - name: Build
-      run: ./build.cmd
+      run: go build -ldflags "-X main.semVer=${{ github.ref_name }} -X main.sha1ver=$(git rev-parse --short HEAD) -X main.buildTime=$(date -u +'%Y-%m-%d %H:%M:%S')" -o Kalenderwoche.exe
 
     - name: Run tests
       run: ./test.cmd

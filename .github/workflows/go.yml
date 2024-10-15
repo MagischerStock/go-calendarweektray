@@ -38,10 +38,31 @@ jobs:
     - name: Run tests
       run: ./test.cmd
 
-    - name: Upload binary to release
+    - name: Upload binary to pre-release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: ./Kalenderwoche.exe
+        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Change pre-release to production ready if build succeeds
+      if: success()
+      run: |
+        curl -X PATCH \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/releases/latest \
+          -d '{"prerelease": false}'
+
+    - name: Delete pre-release and tag if build fails
+      if: failure()
+      run: |
+        RELEASE_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | jq -r .id)
+        curl -X DELETE \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+
+        git tag -d ${{ github.ref_name }}
+        git push --delete origin ${{ github.ref_name }}

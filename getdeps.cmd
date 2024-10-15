@@ -1,1 +1,2 @@
-go get -v -t -d ./...
+go mod tidy
+go mod download

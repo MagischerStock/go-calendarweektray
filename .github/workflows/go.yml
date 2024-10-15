@@ -58,7 +58,7 @@ jobs:
       if: success()
       run: |
         curl -X PATCH \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Authorization: token ${{ secrets.MY_CUSTOM_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/${{ github.repository }}/releases/latest \
           -d '{"prerelease": false}'
@@ -66,10 +66,10 @@ jobs:
     - name: Delete pre-release and tag if build fails
       if: failure()
       run: |
-        $releaseId = (Invoke-RestMethod -Headers @{Authorization = "token $env:GITHUB_TOKEN"} `
+        $releaseId = (Invoke-RestMethod -Headers @{Authorization = "token $env:MY_CUSTOM_TOKEN"} `
                      -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}").id
                      
-        Invoke-RestMethod -Method Delete -Headers @{Authorization = "token $env:GITHUB_TOKEN"} `
+        Invoke-RestMethod -Method Delete -Headers @{Authorization = "token $env:MY_CUSTOM_TOKEN"} `
             -Uri "https://api.github.com/repos/${{ github.repository }}/releases/$releaseId"
         
         git tag -d ${{ github.ref_name }}

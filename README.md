@@ -7,7 +7,7 @@ Shows the current calendar week in the system tray
 
 ## Build
 
-Currently only tested in Windows 10.
+Currently only tested in Windows 10/11.
 
 ```bash 
 $> ./getdeps.cmd  # Get the required dependencies

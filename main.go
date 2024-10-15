@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os/exec"
-
+	"net/http"
 	"github.com/getlantern/systray"
 	"github.com/goodsign/monday"
 )
@@ -12,6 +12,8 @@ var (
 	sha1ver   string // sha1 revision used to build the program
 	buildTime string // when the executable was built
 	semVer    string // the version of the build
+	repoURL   = "https://github.com/MagischerStock/go-calendarweektray" // Repository URL
+	apiURL    = "https://api.github.com/repos/MagischerStock/go-calendarweektray/tags" // API URL for tags
 )
 
 func main() {
@@ -28,22 +30,9 @@ func onReady() {
 	const numberOfEntries = 15
 	addMenuItemsForUpcomingCalendarWeekDates(numberOfEntries)
 
-	// Versionsmenüpunkt erstellen
-	versionMenuItem := systray.AddMenuItem(fmt.Sprintf("Version: %s (SHA: %s)", semVer, sha1ver), "Öffnet das Repository auf GitHub")
-    
-	go func() {
-		for {
-			<-versionMenuItem.ClickedCh
-			openBrowser("https://github.com/MagischerStock/go-calendarweektray")
-		}
-	}()
-
-	systray.AddSeparator()
-
-	// Beenden-Menüpunkt
-	go quitOnMenu()
-
 	go keepWeekNumberIconUpToDate()
+	go quitOnMenu()
+	go checkForUpdates() // Start checking for updates
 }
 
 func addMenuItemsForUpcomingCalendarWeekDates(numberOfEntries int) {
@@ -70,7 +59,7 @@ func keepWeekNumberIconUpToDate() {
 }
 
 func quitOnMenu() {
-	quitMenuItem := systray.AddMenuItem("Beenden", "Beendet die Applikation")
+	quitMenuItem := systray.AddMenuItem(fmt.Sprintf("Beenden (%s - %s)", semVer, sha1ver), "Beendet die Applikation")
 	<-quitMenuItem.ClickedCh
 	systray.Quit()
 }
@@ -91,9 +80,47 @@ func refreshUpcomingCalendarWeekItems() {
 	}
 }
 
-func openBrowser(url string) {
-	err := exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+func checkForUpdates() {
+	// Add menu item to show version
+	versionMenuItem := systray.AddMenuItem(fmt.Sprintf("Version: %s", semVer), "Aktuelle Version")
+
+	// Fetch latest release tag from GitHub API
+	resp, err := http.Get(apiURL)
 	if err != nil {
-		fmt.Println("Failed to open browser:", err)
+		fmt.Println("Error fetching tags:", err)
+		return
 	}
+	defer resp.Body.Close()
+
+	var tags []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tags); err != nil {
+		fmt.Println("Error decoding tags:", err)
+		return
+	}
+
+	if len(tags) > 0 && tags[0].Name != semVer {
+		// Update available
+		versionMenuItem.SetTitle(fmt.Sprintf("Version: %s (Update verfügbar!)", semVer))
+		go func() {
+			for {
+				<-versionMenuItem.ClickedCh
+				openBrowser(repoURL)
+			}
+		}()
+	} else {
+		// No update
+		go func() {
+			for {
+				<-versionMenuItem.ClickedCh
+				openBrowser(repoURL)
+			}
+		}()
+	}
+}
+
+func openBrowser(url string) {
+	// Function to open the URL in the default browser
+	fmt.Println("Opening browser with URL:", url)
 }

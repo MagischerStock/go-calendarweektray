@@ -1,4 +1,4 @@
-name: Go
+name: Go 
 
 on:
   push:
@@ -30,17 +30,17 @@ jobs:
 
     - name: Get the current commit SHA
       id: vars
-      run: echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+      run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     - name: Get the current time
       id: time
-      run: echo "::set-output name=time::$(date -u +'%Y-%m-%d %H:%M:%S')"
+      run: echo "time=$(date -u +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
 
     - name: Get dependencies
       run: ./getdeps.cmd
 
     - name: Build
-      run: go build -ldflags "`"-X main.semVer=${{ github.ref }} -X main.sha1ver=${{ steps.vars.outputs.sha }} -X main.buildTime=${{ steps.time.outputs.time }}\"`" -o Kalenderwoche.exe
+      run: go build -ldflags "-X main.semVer=${{ github.ref_name }} -X main.sha1ver=${{ env.sha }} -X main.buildTime='${{ env.time }}'" -o Kalenderwoche.exe
 
     - name: Run tests
       run: ./test.cmd
@@ -75,4 +75,3 @@ jobs:
         git tag -d ${{ github.ref_name }}
         git push --delete origin ${{ github.ref_name }}
       shell: pwsh
-

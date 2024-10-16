@@ -51,31 +51,3 @@ jobs:
       with:
         files: ./Kalenderwoche.exe
         prerelease: true
-      env:
-        MY_CUSTOM_TOKEN: ${{ secrets.MY_CUSTOM_TOKEN }}
-
-    - name: Change pre-release to production ready if build succeeds
-      if: success()
-      run: |
-        $headers = @{
-            Authorization = "token $env:MY_CUSTOM_TOKEN"
-            Accept = "application/vnd.github.v3+json"
-        }
-        $body = @{
-            prerelease = $false
-        } | ConvertTo-Json
-        Invoke-RestMethod -Method Patch -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest" -Headers $headers -Body $body
-      shell: pwsh
-
-    - name: Delete pre-release and tag if build fails
-      if: failure()
-      run: |
-        $releaseId = (Invoke-RestMethod -Headers @{Authorization = "token $env:MY_CUSTOM_TOKEN"} `
-                     -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}").id
-                     
-        Invoke-RestMethod -Method Delete -Headers @{Authorization = "token $env:MY_CUSTOM_TOKEN"} `
-            -Uri "https://api.github.com/repos/${{ github.repository }}/releases/$releaseId"
-        
-        git tag -d ${{ github.ref_name }}
-        git push --delete origin ${{ github.ref_name }}
-      shell: pwsh
